@@ -574,101 +574,45 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
                 continue;
         }
 
-        int offset = 0;
-        int rightmost = w_test->m_x + w_test->m_w;
+        int main_axis_distance, cross_axis_distance;
 
-        if (nav == NAV_UP || nav == NAV_DOWN)
+        switch (nav)
         {
-            if (nav == NAV_UP)
-            {
-                // Compare current top point with other widget lowest point
-                distance = w->m_y - (w_test->m_y + w_test->m_h);
-            }
-            else
-            {
-                // compare current lowest point with other widget top point
-                distance = w_test->m_y - (w->m_y + w->m_h);
-            }
-
-            // Better select an item on the side that one much higher,
-            // so make the vertical distance matter much more
-            // than the horizontal offset.
-            // The multiplicator of 100 is meant so that the offset will matter
-            // only if there are two or more widget with a (nearly) equal vertical height.
-            distance *= 100;
-
-            wrapping_distance = distance;
-            // if the two widgets are not well aligned, consider them farther
-            // If w's left/right-mosts points are between w_test's,
-            // right_offset and left_offset will be 0.
-            // If w_test's are between w's,
-            // we subtract the smaller from the bigger
-            // else, the smaller is 0 and we keep the bigger
-            int right_offset = std::max(0, w_test->m_x - w->m_x);
-            int left_offset  = std::max(0, (w->m_x + w->m_w) - rightmost);
-            offset = std::max (right_offset - left_offset, left_offset - right_offset);
-        }
-        else if (nav == NAV_LEFT || nav == NAV_RIGHT)
-        {
-            if (nav == NAV_LEFT)
-            {
-                // compare current leftmost point with other widget rightmost
-                distance = w->m_x - rightmost;
-            }
-            else
-            {
-                // compare current rightmost point with other widget leftmost
-                distance = w_test->m_x - (w->m_x + w->m_w);
-            }
-            wrapping_distance = distance;
-
-            int down_offset = std::max(0, w_test->m_y - w->m_y);
-            int up_offset  = std::max(0, (w->m_y + w->m_h) - (w_test->m_y + w_test->m_h));
-            offset = std::max (down_offset - up_offset, up_offset - down_offset);
-
-            // Special case for vertical tabs : select the top element of the body
-            if (w->m_type == GUIEngine::WTYPE_RIBBON)
-            {
-                RibbonWidget* ribbon = dynamic_cast<RibbonWidget*>(w);
-                if (ribbon->getRibbonType() == GUIEngine::RibbonType::RIBBON_VERTICAL_TABS)
-                {
-                    offset = w_test->m_y;
-                    offset *= 100;
-
-                    // Don't count elements above the tabs or too high as valid
-                    if (!(w_test->m_x > (w->m_x + w->m_w) || rightmost < w->m_x) ||
-                         (w_test->m_y + w_test->m_h) < w->m_y)
-                    {
-                        distance = BIG_DISTANCE;
-                        wrapping_distance = BIG_DISTANCE;
-                    }
-                }
-            }
-
-            // No lateral selection if there is not at least partial alignement
-            // >= because we don't want it to trigger if two widgets touch each other
-            else if (offset >= w->m_h)
-            {
-                distance = BIG_DISTANCE;
-                wrapping_distance = BIG_DISTANCE;
-            }
+            case NAV_UP:
+                main_axis_distance = w->m_y - (w_test->m_y + w_test->m_h);
+                break;
+            case NAV_DOWN:
+                main_axis_distance = w_test->m_y - (w->m_y + w->m_h);
+                break;
+            case NAV_LEFT:
+                main_axis_distance = w->m_x - (w_test->m_x + w_test->m_h);
+                break;
+            case NAV_RIGHT:
+                main_axis_distance = w_test->m_x - (w->m_x + w->m_h);
+                break;
         }
 
-        // This happens if the tested widget is in the opposite direction
-        if (distance < 0)
-            distance = BIG_DISTANCE;
-        distance += offset;
-        wrapping_distance += offset;
-
-        if (distance < smallest_distance)
+        switch (nav)
         {
-            smallest_distance = distance;
+            case NAV_UP:
+            case NAV_DOWN:
+                cross_axis_distance = std::abs((w->m_x + w->m_h / 2) - (w_test->m_x + w_test->m_h / 2));
+                break;
+            case NAV_LEFT:
+            case NAV_RIGHT:
+                cross_axis_distance = std::abs((w->m_y + w->m_h / 2) - (w_test->m_y + w_test->m_h / 2));
+                break;
+        }
+
+        // Ignore if widget is in the wrong direction
+        if (main_axis_distance + w_test->m_h <= 0)
+            continue;
+
+        // Pick the widget that most closely matches the direction the user is trying to go
+        if (cross_axis_distance < smallest_distance)
+        {
+            smallest_distance = cross_axis_distance;
             closest_widget_id = i;
-        }
-        if (wrapping_distance < smallest_wrapping_distance)
-        {
-            smallest_wrapping_distance = wrapping_distance;
-            closest_wrapping_widget_id = i;
         }
     } // for i < 1000
 
