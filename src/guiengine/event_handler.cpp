@@ -520,7 +520,8 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
     int distance = 0;
     // So that the UI behavior don't change when it is upscaled
     const int BIG_DISTANCE = irr_driver->getActualScreenSize().Width*100;
-    int smallest_distance = BIG_DISTANCE;
+    int smallest_main_axis_distance = BIG_DISTANCE;
+    int smallest_cross_axis_distance = BIG_DISTANCE;
     // Used when there is no suitable widget in the requested direction
     int closest_wrapping_widget_id = -1;
     int wrapping_distance = 0;
@@ -574,7 +575,9 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
                 continue;
         }
 
-        int main_axis_distance, cross_axis_distance;
+        // The main axis is the direction the user is trying to navigate
+        // The cross axis is the axis perpendicular to this direction
+        int main_axis_distance, cross_axis_distance, widget_main_axis_size;
 
         switch (nav)
         {
@@ -585,10 +588,10 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
                 main_axis_distance = w_test->m_y - (w->m_y + w->m_h);
                 break;
             case NAV_LEFT:
-                main_axis_distance = w->m_x - (w_test->m_x + w_test->m_h);
+                main_axis_distance = w->m_x - (w_test->m_x + w_test->m_w);
                 break;
             case NAV_RIGHT:
-                main_axis_distance = w_test->m_x - (w->m_x + w->m_h);
+                main_axis_distance = w_test->m_x - (w->m_x + w->m_w);
                 break;
         }
 
@@ -596,27 +599,33 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
         {
             case NAV_UP:
             case NAV_DOWN:
-                cross_axis_distance = std::abs((w->m_x + w->m_h / 2) - (w_test->m_x + w_test->m_h / 2));
+                widget_main_axis_size = w_test->m_h;
+                cross_axis_distance = std::abs((w->m_x + w->m_w / 2) - (w_test->m_x + w_test->m_w / 2));
                 break;
             case NAV_LEFT:
             case NAV_RIGHT:
+                widget_main_axis_size = w_test->m_w;
                 cross_axis_distance = std::abs((w->m_y + w->m_h / 2) - (w_test->m_y + w_test->m_h / 2));
                 break;
         }
 
         // Ignore if widget is in the wrong direction
-        if (main_axis_distance + w_test->m_h <= 0)
+        if (main_axis_distance + widget_main_axis_size <= 0)
             continue;
 
         // Pick the widget that most closely matches the direction the user is trying to go
-        if (cross_axis_distance < smallest_distance)
+        if (
+            cross_axis_distance < smallest_cross_axis_distance ||
+            (cross_axis_distance == smallest_cross_axis_distance && main_axis_distance < smallest_main_axis_distance)
+        )
         {
-            smallest_distance = cross_axis_distance;
+            smallest_main_axis_distance = main_axis_distance;
+            smallest_cross_axis_distance = cross_axis_distance;
             closest_widget_id = i;
         }
     } // for i < 1000
 
-    int closest_id = (smallest_distance < BIG_DISTANCE) ? closest_widget_id :
+    int closest_id = (smallest_cross_axis_distance < BIG_DISTANCE) ? closest_widget_id :
                                                           closest_wrapping_widget_id;
     Widget* w_test = GUIEngine::getWidget(closest_id);
     
