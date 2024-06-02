@@ -575,6 +575,26 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
                 continue;
         }
 
+        int current_widget_y = -1;
+        int current_widget_height = -1;
+
+        // For lists, get the coordinates from the selected item instead of the whole widget
+        if (w->m_type == WTYPE_LIST)
+        {
+            ListWidget* list = (ListWidget*) w;
+            assert(list != NULL);
+
+            CGUISTKListBox* list_box = list->getIrrlichtElement<CGUISTKListBox>();
+            current_widget_y = list_box->getItemPos(list_box->getSelected());
+            current_widget_height = list_box->getItemHeight();
+        }
+
+        if (current_widget_y == -1 || current_widget_height == -1)
+        {
+            current_widget_y = w->m_y;
+            current_widget_height = w->m_h;
+        }
+
         // The main axis is the direction the user is trying to navigate
         // The cross axis is the axis perpendicular to this direction
         int main_axis_distance, cross_axis_distance;
@@ -586,11 +606,11 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
             case NAV_UP:
             case NAV_DOWN:
                 // Main axis size is the widget's height
-                current_widget_main_axis_size = w->m_h;
+                current_widget_main_axis_size = current_widget_height;
                 test_widget_main_axis_size = w_test->m_h;
 
                 // Main axis position is the widget's y-coordinate
-                current_widget_main_axis_pos = w->m_y;
+                current_widget_main_axis_pos = current_widget_y;
                 test_widget_main_axis_pos = w_test->m_y;
 
                 cross_axis_distance = std::abs((w->m_x + w->m_w / 2) - (w_test->m_x + w_test->m_w / 2));
@@ -605,10 +625,11 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
                 current_widget_main_axis_pos = w->m_x;
                 test_widget_main_axis_pos = w_test->m_x;
 
-                cross_axis_distance = std::abs((w->m_y + w->m_h / 2) - (w_test->m_y + w_test->m_h / 2));
+                cross_axis_distance = std::abs((current_widget_y + current_widget_height / 2) - (w_test->m_y + w_test->m_h / 2));
                 break;
         }
 
+        // Calculate distance on the main axis
         switch (nav)
         {
             case NAV_UP:

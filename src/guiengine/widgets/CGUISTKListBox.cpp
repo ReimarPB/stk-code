@@ -147,6 +147,17 @@ s32 CGUISTKListBox::getItemAt(s32 xpos, s32 ypos) const
     return item;
 }
 
+s32 CGUISTKListBox::getItemPos(s32 item) const
+{
+	if (item < 0 || item >= (s32)Items.size())
+		return -1;
+
+	if (ItemHeight == 0)
+		return -1;
+
+	return AbsoluteRect.UpperLeftCorner.Y -1 + ItemHeight * item - ScrollBar->getPos();
+}
+
 //! clears the list
 void CGUISTKListBox::clear()
 {
@@ -823,6 +834,11 @@ void CGUISTKListBox::setItemHeight( s32 height )
 {
     ItemHeight = height;
     ItemHeightOverride = 1;
+}
+
+s32 CGUISTKListBox::getItemHeight()
+{
+	return ItemHeight;
 }
 
 
