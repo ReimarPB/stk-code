@@ -577,40 +577,52 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
 
         // The main axis is the direction the user is trying to navigate
         // The cross axis is the axis perpendicular to this direction
-        int main_axis_distance, cross_axis_distance, widget_main_axis_size;
-
-        switch (nav)
-        {
-            case NAV_UP:
-                main_axis_distance = w->m_y - (w_test->m_y + w_test->m_h);
-                break;
-            case NAV_DOWN:
-                main_axis_distance = w_test->m_y - (w->m_y + w->m_h);
-                break;
-            case NAV_LEFT:
-                main_axis_distance = w->m_x - (w_test->m_x + w_test->m_w);
-                break;
-            case NAV_RIGHT:
-                main_axis_distance = w_test->m_x - (w->m_x + w->m_w);
-                break;
-        }
+        int main_axis_distance, cross_axis_distance;
+        int current_widget_main_axis_size, test_widget_main_axis_size;
+        int current_widget_main_axis_pos, test_widget_main_axis_pos;
 
         switch (nav)
         {
             case NAV_UP:
             case NAV_DOWN:
-                widget_main_axis_size = w_test->m_h;
+                // Main axis size is the widget's height
+                current_widget_main_axis_size = w->m_h;
+                test_widget_main_axis_size = w_test->m_h;
+
+                // Main axis position is the widget's y-coordinate
+                current_widget_main_axis_pos = w->m_y;
+                test_widget_main_axis_pos = w_test->m_y;
+
                 cross_axis_distance = std::abs((w->m_x + w->m_w / 2) - (w_test->m_x + w_test->m_w / 2));
                 break;
             case NAV_LEFT:
             case NAV_RIGHT:
-                widget_main_axis_size = w_test->m_w;
+                // Main axis size is the widget's width
+                current_widget_main_axis_size = w->m_w;
+                test_widget_main_axis_size = w_test->m_w;
+
+                // Main axis position is the widget's x-coordinate
+                current_widget_main_axis_pos = w->m_x;
+                test_widget_main_axis_pos = w_test->m_x;
+
                 cross_axis_distance = std::abs((w->m_y + w->m_h / 2) - (w_test->m_y + w_test->m_h / 2));
                 break;
         }
 
+        switch (nav)
+        {
+            case NAV_UP:
+            case NAV_LEFT:
+                main_axis_distance = current_widget_main_axis_pos - (test_widget_main_axis_pos + test_widget_main_axis_size);
+                break;
+            case NAV_DOWN:
+            case NAV_RIGHT:
+                main_axis_distance = test_widget_main_axis_pos - (current_widget_main_axis_pos + current_widget_main_axis_size);
+                break;
+        }
+
         // Ignore if widget is in the wrong direction
-        if (main_axis_distance + widget_main_axis_size <= 0)
+        if (main_axis_distance + test_widget_main_axis_size <= 0)
             continue;
 
         // Pick the widget that most closely matches the direction the user is trying to go
