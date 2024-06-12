@@ -514,7 +514,7 @@ void EventHandler::navigate(const NavigationDirection nav, const int playerID)
  * experimentally while keeping simple heuristics.
  */
 int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int playerID,
-                                      GUIEngine::Widget* w, bool ignore_disabled, int recursion_counter)
+                                      GUIEngine::Widget* widget, bool ignore_disabled, int recursion_counter)
 {
     int closest_widget_id = -1;
     int distance = 0;
@@ -527,6 +527,50 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
     int wrapping_distance = 0;
     int smallest_wrapping_distance = BIG_DISTANCE;
 
+    // Recursively go through all parents
+    Widget* child_widget = widget;
+    Widget* parent_widget = widget->m_parent_widget;
+    do
+    {
+        if (!parent_widget)
+            break;
+
+        if (parent_widget->getType() != WTYPE_DIV)
+            continue;
+
+        // Find the index of the widget within its parent's children
+        int child_index = -1;
+        for (int i = 0; i < parent_widget->m_children.size(); i++)
+        {
+            if (parent_widget->m_children.get(i) == child_widget)
+            {
+                child_index = i;
+                break;
+            }
+        }
+
+        // When moving vertically/horizontally within a vertical/horizontal row div
+        // Don't do any calculations on the coordinates, instead just find the previous/next sibling of the widget
+        if (
+            (parent_widget->m_properties[PROP_LAYOUT] == "vertical-row" && (nav == NAV_UP || nav == NAV_DOWN)) ||
+            (parent_widget->m_properties[PROP_LAYOUT] == "horizontal-row" && (nav == NAV_LEFT || nav == NAV_RIGHT))
+        )
+        {
+            int direction = (nav == NAV_RIGHT || nav == NAV_DOWN ? 1 : -1);
+            for (int i = child_index + direction; i >= 0 && i < parent_widget->m_children.size(); i += direction)
+            {
+                Widget *new_widget = parent_widget->m_children.get(i);
+
+                Widget *focusable = new_widget->getFirstFocusableChild();
+
+                if (focusable)
+                    return focusable->getIrrlichtElement()->getID();
+            }
+        }
+
+        child_widget = parent_widget;
+    } while ((parent_widget = parent_widget->m_parent_widget) != NULL);
+
     // In theory, it's better to look recursively in m_widgets
     // In practice, this is much much simpler and work equally well
     // Usual widget IDs begin at 100 and there is rarely more
@@ -534,6 +578,7 @@ int EventHandler::findIDClosestWidget(const NavigationDirection nav, const int p
     for (int i=0;i<1000;i++)
     {
         Widget* w_test = GUIEngine::getWidget(i);
+        Widget* w = widget;
 
         // The widget id is invalid if :
         // - it doesn't match a widget

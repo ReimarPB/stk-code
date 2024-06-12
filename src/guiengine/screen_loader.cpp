@@ -36,7 +36,7 @@ using namespace gui;
 using namespace GUIEngine;
 
 void Screen::parseScreenFileDiv(irr::io::IXMLReader* xml, PtrVector<Widget>& append_to,
-                                irr::gui::IGUIElement* parent)
+                                irr::gui::IGUIElement* parent, Widget* parent_widget)
 {
     // parse XML file
     while (xml && xml->read())
@@ -277,10 +277,12 @@ if(prop_name != NULL) widget.m_properties[prop_flag] = core::stringc(prop_name).
                     widget.setParent(parent);
                 }
 
+                widget.m_parent_widget = parent_widget;
+
                 /* a new div starts here, continue parsing with this new div as new parent */
                 if (widget.getType() == WTYPE_DIV || widget.getType() == WTYPE_RIBBON)
                 {
-                    parseScreenFileDiv( xml, append_to[append_to.size()-1].m_children, parent );
+                    parseScreenFileDiv( xml, append_to[append_to.size()-1].m_children, parent, &widget );
                 }
             }// end case EXN_ELEMENT
 

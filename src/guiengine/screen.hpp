@@ -134,7 +134,8 @@ namespace GUIEngine
          */
         static void parseScreenFileDiv(irr::io::IXMLReader* xml,
                                        PtrVector<Widget>& append_to,
-                                       irr::gui::IGUIElement* parent = NULL);
+                                       irr::gui::IGUIElement* parent = NULL,
+                                       Widget* parent_widget = NULL);
 
         Screen(bool pause_race=true);
 

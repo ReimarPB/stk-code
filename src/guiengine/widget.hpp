@@ -264,6 +264,9 @@ namespace GUIEngine
          */
         PtrVector<Widget> m_children;
 
+        /** This widget's parent widget (as specified in the XML file) if one exists */
+        Widget* m_parent_widget;
+
         /** A bitmask of which badges to show, if any; choices are *_BADGE, defined above */
         int m_badges;
 
@@ -522,6 +525,8 @@ namespace GUIEngine
         bool isFocusable() const { return m_focusable; }
 
         void setFocusable(bool f) { m_focusable = f; }
+
+        Widget* getFirstFocusableChild();
 
         /**
           * \}

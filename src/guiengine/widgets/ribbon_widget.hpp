@@ -229,6 +229,8 @@ namespace GUIEngine
         
         PtrVector<Widget>& getRibbonChildren() { return m_children; }
 
+        PtrVector<Widget>& getActiveChildren() { return m_active_children; }
+
         virtual EventPropagation onActivationInput(const int playerID) OVERRIDE;
 
         virtual void resize() OVERRIDE;

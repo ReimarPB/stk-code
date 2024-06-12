@@ -410,3 +410,27 @@ void Widget::moveIrrlichtElement()
                                                          irr::core::dimension2di(m_w, m_h) ) );
     }
 }
+
+// -----------------------------------------------------------------------------
+
+Widget* Widget::getFirstFocusableChild()
+{
+    IGUIElement* element = this->getIrrlichtElement();
+
+    std::cout << element << std::endl;
+
+    if (element && Widget::isFocusableId(element->getID()))
+        return this;
+
+    std::cout << "looking through " << m_children.size() << " children" << std::endl;
+
+    for (Widget* child : m_children)
+    {
+        Widget* result = child->getFirstFocusableChild();
+
+        if (result)
+            return result;
+    }
+
+    return NULL;
+}
